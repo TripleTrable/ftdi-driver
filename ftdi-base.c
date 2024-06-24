@@ -156,7 +156,7 @@ static int ftdi_probe(struct usb_interface *interface,
     if (ret < 0)
 		printk(KERN_ERR "Could not initialize gpio\n");
 
-	printk("ftdi: (%04X:%04X) created\n", id->idVendor, id->idProduct);
+	printk(KERN_INFO "ftdi: (%04X:%04X) created\n", id->idVendor, id->idProduct);
 	return 0;
 }
 
@@ -164,7 +164,6 @@ static void ftdi_disconnect(struct usb_interface *interface)
 {
 	struct ftdi_priv *dev = usb_get_intfdata(interface);
 
-	printk("ftdi: driver mode is %d\n", dev->mode);
 	if (dev->mode == FTDI_MODE_GPIO)
 		ftdi_gpio_deregister(interface);
 
@@ -173,7 +172,20 @@ static void ftdi_disconnect(struct usb_interface *interface)
 	device_remove_file(&interface->dev, &dev_attr_ftdi_mode);
 
 	kfree(dev);
-	printk("ftdi: driver removed\n");
+	printk(KERN_INFO "ftdi: driver removed\n");
+}
+
+static int ftdi_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	printk(KERN_INFO "ftdi: suspend\n");
+    return 0;
+}
+
+static int ftdi_resume(struct usb_interface *intf)
+{
+
+	printk(KERN_INFO "ftdi: resume\n");
+    return 0;
 }
 
 
@@ -188,17 +200,19 @@ static struct usb_driver ftdi_driver = {
 	.id_table = ftdi_table,
 	.probe = ftdi_probe,
 	.disconnect = ftdi_disconnect,
+	.resume = ftdi_resume,
+	.suspend = ftdi_suspend,
+    .supports_autosuspend = 1,
+    .no_dynamic_id = 1,
 };
 
 static int __init ftdi_init(void)
 {
-	printk("ftdi: init\n");
 	return usb_register(&ftdi_driver);
 }
 
 static void __exit ftdi_exit(void)
 {
-	printk("ftdi: exit\n");
 	return usb_deregister(&ftdi_driver);
 }
 

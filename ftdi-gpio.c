@@ -14,16 +14,22 @@
  */
 static int ftdi_set_bitmode(struct usb_interface *interface, u8 mode)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_set_bitmode enter (%d)\n",mode);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 	struct usb_device *dev = priv->usb_dev;
 	int result;
 	u16 val;
 
 	result = usb_autopm_get_interface(interface);
+	printk(KERN_DEBUG
+	       "ftdi-gpio: ftdi_set_bitmode - get_interface (status: %d) result: %d\n",
+           interface->dev.power.last_status,
+	       result);
 	if (result)
 		return result;
 
 	val = (mode << 8) | (priv->gpio_output << 4) | priv->gpio_value;
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_set_bitmode - usb_msg value: %d\n",val);
 	result = usb_control_msg(dev,
 				 usb_sndctrlpipe(dev, 0),
 				 FTDI_SIO_SET_BITMODE_REQUEST,
@@ -37,6 +43,7 @@ static int ftdi_set_bitmode(struct usb_interface *interface, u8 mode)
 
 	usb_autopm_put_interface(interface);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_set_bitmode exit\n");
 	return result;
 }
 
@@ -86,6 +93,7 @@ static int ftdi_gpio_request(struct gpio_chip *gc, unsigned int offset)
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 	int result;
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_request enter\n");
 	mutex_lock(&priv->gpio_lock);
 	if (!priv->gpio_used) {
 		/* Set default pin states, as we cannot get them from device */
@@ -101,19 +109,23 @@ static int ftdi_gpio_request(struct gpio_chip *gc, unsigned int offset)
 	}
 	mutex_unlock(&priv->gpio_lock);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_request exit\n");
 	return 0;
 }
 
 static int ftdi_gpio_direction_get(struct gpio_chip *gc, unsigned int gpio)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_get enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_get exit\n");
 	return !(priv->gpio_output & BIT(gpio));
 }
 
 static int ftdi_gpio_direction_input(struct gpio_chip *gc, unsigned int gpio)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_input enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 	int result;
@@ -125,12 +137,14 @@ static int ftdi_gpio_direction_input(struct gpio_chip *gc, unsigned int gpio)
 
 	mutex_unlock(&priv->gpio_lock);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_input exit\n");
 	return result;
 }
 
 static int ftdi_gpio_direction_output(struct gpio_chip *gc, unsigned int gpio,
 					int value)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_output enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 	int result;
@@ -147,6 +161,7 @@ static int ftdi_gpio_direction_output(struct gpio_chip *gc, unsigned int gpio,
 
 	mutex_unlock(&priv->gpio_lock);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_direction_output exit\n");
 	return result;
 }
 
@@ -154,6 +169,7 @@ static int ftdi_gpio_init_valid_mask(struct gpio_chip *gc,
 				     unsigned long *valid_mask,
 				     unsigned int ngpios)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_init_valid_mask enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 	unsigned long map = priv->gpio_altfunc;
@@ -166,12 +182,14 @@ static int ftdi_gpio_init_valid_mask(struct gpio_chip *gc,
 		dev_dbg(&interface->dev, "CBUS%*pbl configured for GPIO\n", ngpios,
 			valid_mask);
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_init_valid_mask exit\n");
 	return 0;
 }
 
 
 static int ftdi_gpio_get(struct gpio_chip *gc, unsigned int gpio)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_get enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	int result;
 
@@ -179,11 +197,13 @@ static int ftdi_gpio_get(struct gpio_chip *gc, unsigned int gpio)
 	if (result < 0)
 		return result;
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_get exit\n");
 	return !!(result & BIT(gpio));
 }
 
 static void ftdi_gpio_set(struct gpio_chip *gc, unsigned int gpio, int value)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_set enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 
@@ -197,12 +217,14 @@ static void ftdi_gpio_set(struct gpio_chip *gc, unsigned int gpio, int value)
 	ftdi_set_cbus_pins(interface);
 
 	mutex_unlock(&priv->gpio_lock);
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_set exit\n");
 }
 
 
 static int ftdi_gpio_get_multiple(struct gpio_chip *gc, unsigned long *mask,
 					unsigned long *bits)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_get_multiple enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	int result;
 
@@ -212,12 +234,14 @@ static int ftdi_gpio_get_multiple(struct gpio_chip *gc, unsigned long *mask,
 
 	*bits = result & *mask;
 
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_get_multiple exit\n");
 	return 0;
 }
 
 static void ftdi_gpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
 					unsigned long *bits)
 {
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_set_multiple enter\n");
 	struct usb_interface *interface = gpiochip_get_data(gc);
 	struct ftdi_priv *priv = usb_get_intfdata(interface);
 
@@ -228,6 +252,7 @@ static void ftdi_gpio_set_multiple(struct gpio_chip *gc, unsigned long *mask,
 	ftdi_set_cbus_pins(interface);
 
 	mutex_unlock(&priv->gpio_lock);
+    printk(KERN_DEBUG "ftdi-gpio: ftdi_gpio_set_multiple exit\n");
 }
 
 /* ----------------------------------------------------------------------------
@@ -260,7 +285,7 @@ static int ftdi_gpio_init_ft232h(struct usb_interface *interface)
 	 */
 	cbus_config = buf[2] << 8 | (buf[1] & 0xf) << 4 | (buf[0] & 0xf0) >> 4;
 
-    printk(KERN_WARNING "cbus config is %04x",cbus_config);
+    printk(KERN_DEBUG "cbus config is %04x",cbus_config);
 	priv->gc.ngpio = 4;
 	priv->gpio_altfunc = 0xff;
 
@@ -313,9 +338,7 @@ int ftdi_gpio_register(struct usb_interface *interface)
 
 void ftdi_gpio_deregister(struct usb_interface *interface)
 {
-	printk("ftdi: ftdi_gpio_deregister *interface: %p\n", interface);
     struct ftdi_priv *priv = usb_get_intfdata(interface);
-	printk("ftdi: ftdi_gpio_deregister *priv: %p\n", priv);
 
 	if (priv->gpio_registered) {
 		gpiochip_remove(&priv->gc);
