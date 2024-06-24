@@ -1,6 +1,6 @@
 obj-m += ftdi.o
 
-ftdi-objs += ftdi-base.o ftdi-general.o
+ftdi-objs += ftdi-base.o ftdi-general.o ftdi-gpio.o
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(shell pwd) modules
